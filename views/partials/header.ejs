@@ -2,9 +2,16 @@
 <div class="header">
     <h1>Blue&nbsp;Chess</h1>
     <ul>
-        <li><a href="#">Home</a></li>
-        <li><a href="#">About</a></li>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
         <li><a href="#" id="bruh-button" onclick="document.getElementById('bruh-sound').play();">Bruh</a></li>
+        <% if(user == null) { %>
+        <li><a href="/login">log in</a></li>
+        <% } else { %>
+        <li><a href="/login">Profile</a></li>
+        <li><a href="/login">Log out</a></li>
+        <p>czesc <%= user.displayName %> !</p>
+        <% } %>
     </ul>
 </div>
 <hr>

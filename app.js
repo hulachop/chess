@@ -33,35 +33,43 @@ io.on('connection', socket => {
 });
 
 app.get('/', (req,res) => {
-    res.render('game');
+    let user = firebase.auth().currentUser;
+    res.render('game', {user});
 });
 
 app.get('/login', (req,res) => {
-    res.render('login');
+    let user = firebase.auth().currentUser;
+    res.render('login', {user});
 });
 
 app.get('/register', (req, res) => {
-    res.render('register');
+    let user = firebase.auth().currentUser;
+    res.render('register', {user});
 });
+
+app.get('/about', (req, res) => {
+    let user = firebase.auth().currentUser;
+    res.render('about', {user});
+})
 
 app.post('/login', urlencodedParser, (req, res) => {
     console.log(req.body);
     firebase.auth().signInWithEmailAndPassword(req.body.email,req.body.password)
         .then( userCredential => {
-            console.log('zalogowano pomyslnie');
+            userCredential
+            res.render('game', {user:userCredential.user});
         })
         .catch(error => {
             console.log('ERROR!');
             console.log(error.message);
+            res.render('login');
         });
-    res.render('login');
 });
 
 app.post('/register', urlencodedParser, (req,res) => {
     firebase.auth().createUserWithEmailAndPassword(req.body.email, req.body.password)
         .then( userCredential => {
-            console.log('zarejestrowano!');
-            console.log(userCredential.user);
+            res.render('game', {user:userCredential.user});
         })
         .catch( error => {
             console.log('ERROR!');
