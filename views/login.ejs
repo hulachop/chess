@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login</title>
+    <link rel="stylesheet" href="styles/styles.css">
+    <style>
+        h2 {
+            margin:auto;
+            margin-top: 1%;
+            margin-bottom: 1%;
+            text-align: center;
+        }
+        input {
+            margin: auto;
+            align-self: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        .button {
+            margin: auto;
+            margin-top: 1%;
+            margin-bottom: 1%;
+            border: solid;
+            border-radius: 20px;
+            padding-left: 10px;
+            padding-right: 10px;
+            background-color: rgb(60, 60, 255);
+        }
+        .button a {
+            text-decoration: none;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header.ejs'); %>
+    <div style="width: 500px; height: auto; background-color:rgb(86, 86, 252); margin:auto; border: solid;">
+        <form action="login" method="POST" id="form">
+            <h2>email</h2>
+            <input type="email" name="email">
+            <h2>password</h2>
+            <input type="password" name="password">
+            <div class="button" id="button"><a href="#">log in</a></div>
+        </form>
+        <a href="/register" style="text-decoration: none; color: black;">Don't have an account?</a>
+    </div>
+    <script>
+        document.getElementById('button').addEventListener('click', e => {
+            document.getElementById('form').submit();
+        })
+    </script>
+    <%- include('partials/firebase.ejs'); %>
+</body>
+</html>

@@ -1,0 +1,74 @@
+*{
+    margin:0;
+    font-family: sans-serif;
+}
+:root{
+    --board-size: 70vh;
+    --cell-size: calc(var(--board-size)*.1225);
+    --edge-size: calc((var(--board-size) - (8*var(--cell-size))) * 0.5);
+}
+body{
+    margin:0;
+    background-color: rgb(60, 60, 255);
+}
+.header{
+    background-color: rgb(86, 86, 252);
+    height: 8vh;
+    max-width: 40vw;
+    min-width: 600px;
+    margin:auto;
+    margin-top: 1vh;
+    margin-bottom: 1vh;
+    border: rgb(0, 0, 0);
+    border-style: solid;
+    text-align: center;
+}
+hr {
+    margin: 25px;
+}
+.header h1{
+    padding:0;
+    margin:0;
+    height: 4vh;
+    font-size:4vh;
+}
+.header hr{
+    margin: 0;
+    padding: 0;
+    margin-right: 20px;
+    margin-left: 20px;
+    height: 0vh;
+}
+.header ul{
+    padding:0;
+    padding-top: 1vh;
+    margin: 0;
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+}
+.header ul li{
+    padding: 0;
+}
+.header ul li a{
+    padding: 0;
+    margin: 0;
+    text-decoration: none;
+    color: black;
+    font-size: 2vh;
+}
+.board{
+    width: var(--board-size);
+    height: var(--board-size);
+    background-image: url("../img/rect-8x8.svg");
+    background-size: contain;
+    margin: auto;
+}
+img{
+    user-drag: none; 
+user-select: none;
+-moz-user-select: none;
+-webkit-user-drag: none;
+-webkit-user-select: none;
+-ms-user-select: none;
+}
