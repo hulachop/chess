@@ -1,3 +1,5 @@
+const database = firebase.database();
+
 oob = function(pos){
     return !(pos.x > -1 && pos.x < 8 && pos.y > -1 && pos.y < 8);
 }
@@ -85,7 +87,6 @@ CalcMoves();
 function LoadFen(fen){
     let pos = new v2d(0,0);
     pieces = new Array(64);
-    console.log(fen.length);
     for(let i = 0; i < fen.length; i++){
         if(fen[i] == '/'){
             pos.y += 1;
