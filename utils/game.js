@@ -12,4 +12,8 @@ function Init(socket){
         });
     })
 }
+
+function createGame(){
+    
+}
 module.exports = Init;
