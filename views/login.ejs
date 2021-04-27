@@ -42,18 +42,26 @@
     <div style="width: 500px; height: auto; background-color:rgb(86, 86, 252); margin:auto; border: solid;">
         <form action="login" method="POST" id="form">
             <h2>email</h2>
-            <input type="email" name="email">
+            <input type="email" id="email">
             <h2>password</h2>
-            <input type="password" name="password">
+            <input type="password" id="password">
             <div class="button" id="button"><a href="#">log in</a></div>
         </form>
         <a href="/register" style="text-decoration: none; color: black;">Don't have an account?</a>
     </div>
     <script>
         document.getElementById('button').addEventListener('click', e => {
-            document.getElementById('form').submit();
-        })
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
+                let form = document.getElementById('form');
+                firebase.auth().signInWithEmailAndPassword(form['email'].value,form['password'].value);
+            });
+        });
     </script>
     <%- include('partials/firebase.ejs'); %>
+    <script>
+        firebase.auth().onAuthStateChanged(user => {
+            if(user!=null) location.href = '/';
+        });
+    </script>
 </body>
 </html>

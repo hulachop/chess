@@ -1,23 +1,10 @@
-const database = firebase.database();
-
-oob = function(pos){
-    return !(pos.x > -1 && pos.x < 8 && pos.y > -1 && pos.y < 8);
-}
-
+import {Pieces, Piece, Idx, inDir, v2d} from './helper.js';
+import Cards from './cards.js';
 var inputHandlers = new Array();
 var turn = 0;
-
-pieces = new Array(64);
-attackMap = [new Array(64),new Array(64)];
-cards = new Array();
-cards.push(new Cards["SUPERPAWN"](0));
-cards.push(new Cards.SUPERPAWN(1));
-cards.push(new ENPASSANT(0));
-cards.push(new CASTLE(0));
-cards.push(new ENPASSANT(1));
-cards.push(new CASTLE(1));
-cards.push(new REVERSEPAWN(0));
-
+var pieces = new Array(64);
+var attackMap = [new Array(64),new Array(64)];
+var cards = new Array();
 var properties = [
     {
         friendlyFire: false,
@@ -28,11 +15,6 @@ var properties = [
         allowCheck: false
     }
 ];
-
-function printBoard(){
-    console.log(JSON.stringify(pieces));
-}
-
 const Filters = {
     noCheck: function(pos, m){
         let output = [];
@@ -47,7 +29,7 @@ const Filters = {
             for(let i = 0; i < 64; i++){
                 if(pieces[i] != null && pieces[i].color == opponent){
                     let b = false;
-                    let temp = pieces[i].CalcMoves(true);
+                    let temp = pieces[i].CalcMoves(pieces, true);
                     for(let j = 0; j < temp.length; j++){
                         let piece = pieces[temp[j].idx()];
                         if(piece != null && piece.type == 6 && piece.color == turn){
@@ -78,11 +60,19 @@ const Filters = {
         return output;
     }
 }
+var oob = (pos) => !(pos.x > -1 && pos.x < 8 && pos.y > -1 && pos.y < 8);
 
-var fen = getParameterByName("f");
-if(fen == null) LoadFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-else LoadFen(fen);
-CalcMoves();
+function Init(bcbn){
+    LoadBCBN(bcbn);
+    CalcMoves();
+}
+
+function LoadBCBN(bcbn){
+    for(let i = 0; i < 2; i++) bcbn.cards[i].forEach(cardName => {cards.push(new Cards[cardName](i))});
+    if(bcbn.SFEN != null) LoadFen(bcbn.SFEN);
+    else LoadFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
+    if(bcbn.moves != null) for(const move of bcbn.moves) MoveRaw(new v2d(move.x,move.y), new v2d(move.x2,move.y2));
+}
 
 function LoadFen(fen){
     let pos = new v2d(0,0);
@@ -105,15 +95,14 @@ function LoadFen(fen){
         pos.x++;
     }
     for(let i = 0; i < 64; i++) if (pieces[i]!=null) cards.forEach(card => {
-        if (card.OnSpawn != undefined) card.OnSpawn(pieces[i]);
+        if (card.OnSpawn != undefined) card.OnSpawn(pieces, pieces[i]);
     });
-    DrawBoard();
 }
 
 function CalcMoves(){
     attackMap = [new Array(64),new Array(64)];
-    for(let i = 0; i < 64; i++) if(pieces[i] != null) {
-        pieces[i].CalcMoves();
+    for(let i = 0; i < 64; i++) if(pieces[i] != null && pieces[i].color == turn) {
+        pieces[i].CalcMoves(pieces);
     }
 }
 
@@ -123,46 +112,53 @@ function FilterMoves(pos, m){
     return m;
 }
 
-function InputHandler(){
+function HandleInput(from, to){
     if(inputHandlers.length!=0){
-        if(inputHandlers[0](to, from)) return inputHandlers.shift();
-    }
-    if((from == null)||(from.x==to.x&&from.y==to.y)){
-        if(movesGUI!=null) movesGUI = [];
+        if(inputHandlers[0](to, from)){
+            inputHandlers.shift();
+            return true;
+        }
         return false;
     }
-    else{
-        if(turn == pieces[from.idx()].color) return Move();
+    if((from != null)&&(from.x!=to.x||from.y!=to.y)){
+        if(turn == pieces[from.idx()].color) return Move(from, to);
         return false;
     }
+    return false;
 }
 
-function Move(){
+function Move(from, to){
     let o = false;
-    for(let i = 0; i < movesGUI.length; i++){
-        if(movesGUI[i].x==to.x&&movesGUI[i].y==to.y){
+    for(let i = 0; i < pieces[from.idx()].moves.length; i++){
+        if(pieces[from.idx()].moves[i].x==to.x&&pieces[from.idx()].moves[i].y==to.y){
             let dead = pieces[to.idx()];
-            pieces[idx(to.x,to.y)] = pieces[idx(from.x,from.y)];
-            pieces[idx(to.x,to.y)].pos = new v2d(to.x,to.y);
-            pieces[idx(from.x,from.y)] = null;
+            pieces[Idx(to.x,to.y)] = pieces[Idx(from.x,from.y)];
+            pieces[Idx(to.x,to.y)].pos = new v2d(to.x,to.y);
+            pieces[Idx(from.x,from.y)] = null;
             cards.forEach(card => {
-                if (card.OnMove != undefined) card.OnMove(pieces[to.idx()], from, to, dead);
+                if (card.OnMove != undefined) card.OnMove(pieces, pieces[to.idx()], from, to, dead);
             });
-            from = null;
-            movesGUI = [];
-            DrawBoard();
-            DrawMarks();
             NextTurn();
             CalcMoves();
             o = true;
             break;
         }
     }
-    if(!o){
-        from = null;
-        movesGUI = [];
-        DrawMarks();
-    }
+    return o;
+}
+
+function MoveRaw(from, to){
+    let o = false;
+    let dead = pieces[to.idx()];
+    pieces[Idx(to.x,to.y)] = pieces[Idx(from.x,from.y)];
+    pieces[Idx(to.x,to.y)].pos = new v2d(to.x,to.y);
+    pieces[Idx(from.x,from.y)] = null;
+    cards.forEach(card => {
+        if (card.OnMove != undefined) card.OnMove(pieces, pieces[to.idx()], from, to, dead);
+    });
+    NextTurn();
+    CalcMoves();
+    o = true;
     return o;
 }
 
@@ -176,3 +172,5 @@ function NextColor(color){
     if(color > 1) return 0;
     return color;
 }
+
+export {Init, oob, CalcMoves, Move, NextTurn, NextColor, HandleInput, FilterMoves, pieces, cards, attackMap, turn};

@@ -1,17 +1,23 @@
 <audio src="bruh.mp3" id="bruh-sound"></audio>
 <div class="header">
-    <h1>Blue&nbsp;Chess</h1>
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+    <h1 id="headerText">Blue&nbsp;Chess</h1>
     <ul>
         <li><a href="/">Home</a></li>
         <li><a href="/about">About</a></li>
         <li><a href="#" id="bruh-button" onclick="document.getElementById('bruh-sound').play();">Bruh</a></li>
-        <% if(user == null) { %>
-        <li><a href="/login">log in</a></li>
-        <% } else { %>
-        <li><a href="/profile">Profile</a></li>
-        <li><a href="/logout">Log out</a></li>
-        <p>czesc <%= user.displayName %> !</p>
-        <% } %>
+        <li class="logged-out hidden"><a href="/login">log in</a></li>
+        <li class="logged-in hidden"><a href="/profile">Profile</a></li>
+        <li class="logged-in hidden" id="logout-button"><a href="#">Log out</a></li>
+        <p class="logged-in hidden" id="hello">czesc!</p>
     </ul>
+    <script>
+        const headerText = document.getElementById('headerText');
+    </script>
+    <script src="scripts/header.js" defer></script>
 </div>
 <hr>

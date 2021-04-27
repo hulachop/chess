@@ -1,9 +1,17 @@
+import {Init as InitGame, HandleInput, pieces, turn, oob} from './game.js';
+import {v2d} from './helper.js'
 var pieceElements = document.querySelectorAll("piece");
 var markElements = document.querySelectorAll(".mark");
 const pieceArea = document.getElementById("piece-area");
 const markArea = document.getElementById("mark-area");
 const boardArea = document.getElementById("board");
-//document.getElementById("bruh-button").addEventListener("click",function(){document.getElementById("bruh-sound").play();});
+var gid = null;
+var myTurn = -1;
+var myUid = null;
+var online = false;
+var socket;
+var listenForChanges = false;
+var flipBoard = false;
 
 var from, to, movesGUI, dragged;
 
@@ -20,9 +28,11 @@ document.addEventListener("mouseup", e => {
         dragged.style.removeProperty("--mouse-x");
         dragged.style.removeProperty("--mouse-y");
         to = new v2d(Math.floor((e.clientX-pieceArea.offsetLeft)/(pieceArea.clientWidth*0.1225)),Math.floor((e.clientY-pieceArea.offsetTop)/(pieceArea.clientWidth*0.1225)));
+        if(flipBoard) to = new v2d(7 - to.x, 7 - to.y);
         if(!oob(to)){
-            if(to.x!=from.x||to.y!=from.y)InputHandler(to, from);
-            to = null;
+            if(from != null && (to.x!=from.x||to.y!=from.y)){
+                Move();
+            }
         }
         dragged = null;
     }
@@ -31,9 +41,85 @@ document.addEventListener("mouseup", e => {
 pieceArea.addEventListener("mousedown", e => {
     if(e.target != e.currentTarget) return;
     to = new v2d(Math.floor((e.clientX-pieceArea.offsetLeft)/(pieceArea.clientWidth*0.1225)),Math.floor((e.clientY-pieceArea.offsetTop)/(pieceArea.clientWidth*0.1225)));
-    InputHandler();
-    to = null;
+    if(flipBoard) to = new v2d(7 - to.x, 7 - to.y);
+    if(Move())DrawBoard();
+    DrawMarks();
 });
+
+gid = getParameterByName('gid');
+if(gid != null){
+    socket = io();
+    socket.on('connect', () => {
+        socket.emit('joinGame', gid);
+    });
+    socket.on('moveError', error => {
+        console.log('ERROR!');
+        console.log(error);
+        location.reload();
+    });
+    socket.on('move', data => {
+        if(data.from != myUid){
+            HandleInput(new v2d(data.move.x,data.move.y), new v2d(data.move.x2,data.move.y2));
+            from = null;
+            to = null;
+            movesGUI = [];
+            DrawBoard();
+            DrawMarks();
+        }
+    });
+    firebase.auth().onAuthStateChanged(user => {
+        if(user == null) location.href ='/login';
+        myUid = user.uid;
+        database.ref('games/'+gid).once('value', snapshot => {
+            if(!snapshot.exists()) location.href = '/';
+            let val = snapshot.val();
+            for(let i = 0; i < val.players.length; i++){
+                if(val.players[i] == user.uid){
+                    myTurn = i;
+                    break;
+                }
+            }
+            InitGame(val.BCBN);
+            if(myTurn == 1) flipBoard = true;
+            DrawBoard();
+        });
+    });
+    online = true;
+}
+else{
+    InitGame();
+    DrawBoard();
+}
+
+function Move(){
+    if(!online){
+        let o = HandleInput(from, to);
+        from = null;
+        to = null;
+        movesGUI = null;
+        return o;
+    }
+    else{
+        if(from == null || to == null) return false;
+        let o = HandleInput(from, to);
+        if(o) firebase.auth().currentUser.getIdToken().then(token => {
+            let move = {
+                x:from.x,
+                y:from.y,
+                x2:to.x,
+                y2:to.y
+            };
+            socket.emit('makeMove', {gid, token, move});
+            from = null;
+            to = null;
+            movesGUI = null;
+            DrawMarks();
+        });
+        if(o) DrawBoard();
+        DrawMarks();
+        return o;
+    }
+}
 
 function DrawBoard(){
     pieceElements.forEach(e => {
@@ -51,8 +137,17 @@ function DrawBoard(){
                     break;
             }
             piece.classList.add(pieces[i].typeName);
-            piece.style.setProperty("--game-x",pieces[i].pos.x);
-            piece.style.setProperty("--game-y",pieces[i].pos.y);
+            let gameX, gameY;
+            if(flipBoard){
+                gameX = 7 - pieces[i].pos.x;
+                gameY = 7 - pieces[i].pos.y;
+            }
+            else{
+                gameX = pieces[i].pos.x;
+                gameY = pieces[i].pos.y;
+            }
+            piece.style.setProperty("--game-x",gameX);
+            piece.style.setProperty("--game-y",gameY);
             pieceArea.appendChild(piece);
         }
     }
@@ -66,7 +161,8 @@ function InitPieceElement(element){
             let o = false;
             if(movesGUI!=null && from != null){
                 to = new v2d(Math.floor((e.clientX-pieceArea.offsetLeft)/(pieceArea.clientWidth*0.1225)),Math.floor((e.clientY-pieceArea.offsetTop)/(pieceArea.clientWidth*0.1225)));
-                o = InputHandler();
+                if(flipBoard) to = new v2d(7 - to.x, 7 - to.y);
+                o = Move();
             }
             if(o==false){
                 dragged = e.target;
@@ -74,9 +170,13 @@ function InitPieceElement(element){
                 dragged.style.setProperty("--mouse-x",(e.clientX - pieceArea.offsetLeft)+"px");
                 dragged.style.setProperty("--mouse-y",(e.clientY - pieceArea.offsetTop)+"px");
                 from = new v2d(dragged.style.getPropertyValue("--game-x")-0,dragged.style.getPropertyValue("--game-y")-0);
-                if(turn == pieces[from.idx()].color){
+                if(flipBoard) from = new v2d(7 - from.x,7-from.y);
+                if(turn == pieces[from.idx()].color && (online == false || turn == myTurn)){
                     movesGUI = pieces[from.idx()].moves;
                     DrawMarks();
+                }
+                else{
+                    from = null;
                 }
             }
         }
@@ -89,16 +189,34 @@ function DrawMarks(){
         var mark = document.createElement("div");
         mark.classList.add("mark");
         mark.classList.add("circle");
-        mark.style.setProperty("--game-x",from.x);
-        mark.style.setProperty("--game-y",from.y);
+        let gameX, gameY;
+        if(flipBoard){
+            gameX = 7 - from.x;
+            gameY = 7 - from.y;
+        }
+        else{
+            gameX = from.x;
+            gameY = from.y;
+        }
+        mark.style.setProperty("--game-x",gameX);
+        mark.style.setProperty("--game-y",gameY);
         markArea.appendChild(mark);
     }
-    for(let i = 0; i < movesGUI.length; i++){
+    if (movesGUI != null) for(let i = 0; i < movesGUI.length; i++){
         let mark = document.createElement("div");
         mark.classList.add("mark");
         mark.classList.add("dot");
-        mark.style.setProperty("--game-x",movesGUI[i].x);
-        mark.style.setProperty("--game-y",movesGUI[i].y);
+        let gameX, gameY;
+        if(flipBoard){
+            gameX = 7 - movesGUI[i].x;
+            gameY = 7 - movesGUI[i].y;
+        }
+        else{
+            gameX = movesGUI[i].x;
+            gameY = movesGUI[i].y;
+        }
+        mark.style.setProperty("--game-x",gameX);
+        mark.style.setProperty("--game-y",gameY);
         markArea.appendChild(mark);
     }
     markElements = document.querySelectorAll(".mark");

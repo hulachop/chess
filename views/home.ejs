@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="styles/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .button {
+            text-decoration: none;
+            color: black;
+            border: solid;
+        }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+    <%- include('partials/header.ejs'); %>
+    <form style="width:fit-content; margin: auto;" class="logged-in" action="createGame" method="post" id="createGame-form">
+        <input type="text" style="display: none;" name="token" class="token">
+        <a href="#" id="createGame-button">
+            <h1 class="button">Create game</h1>
+        </a>
+    </form>
+    <%- include('partials/firebase.ejs'); %>
+    <script>
+        firebase.auth().onAuthStateChanged(user => {
+            if(user != null) {
+                user.getIdToken().then(token => {
+                    for(const elem of document.getElementsByClassName('token')) elem.value = token;
+                });
+            }
+        });
+        document.getElementById('createGame-button').addEventListener('click', e => {
+            document.getElementById('createGame-form').submit();
+        })
+    </script>
+</body>
+</html>

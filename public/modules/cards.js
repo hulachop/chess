@@ -1,3 +1,5 @@
+import {Pieces, Piece, Idx, inDir, v2d} from './helper.js';
+import {oob, attackMap, NextColor} from './game.js';
 const Cards = {};
 Cards.SUPERPAWN = function (color){
     this.color = color;
@@ -6,32 +8,32 @@ Cards.SUPERPAWN = function (color){
 Cards.SUPERPAWN.prototype = {
     OnInit: function(){},
     OnSpawn: function(){},
-    OnMove: function(piece, from, to, dead){
+    OnMove: function(pieces, piece, from, to, dead){
         if(piece.color == this.color && piece.type == 1) piece.moved = true;
     },
-    ChangeMoves: function(piece, moves){
+    ChangeMoves: function(pieces, piece, moves){
         let nMoves = [];
         if(piece.color == this.color && piece.type == 1 && piece.moved == undefined){
             for(let i = 0; i < moves.length; i++){
                 if(pieces[moves[i].idx()] == null){
                     let temp = moves[i].minus(piece.pos);
                     temp = piece.pos.plus(temp.times(2));
-                    if(pieces[temp.idx()] == null) nMoves.push(temp);
+                    if(!oob(temp) && pieces[temp.idx()] == null) nMoves.push(temp);
                 }
             }
         }
         for(let i = 0; i < nMoves.length; i++) moves.push(nMoves[i]);
     }
 }
-function ENPASSANT(color){
+Cards.ENPASSANT = function(color){
     this.color = color;
     this.pos = null;
     this.from = null;
     this.piecePos = null;
     this.name = 'ENPASSANT';
 }
-ENPASSANT.prototype = {
-    OnMove: function(piece, from, to, dead){
+Cards.ENPASSANT.prototype = {
+    OnMove: function(pieces, piece, from, to, dead){
         if(piece.type == 1 && piece.color != this.color){
             let temp = to.minus(from);
             if(Math.abs(temp.y)>1){
@@ -55,24 +57,24 @@ ENPASSANT.prototype = {
             }
         }
     },
-    ChangeMoves: function(piece, moves){
+    ChangeMoves: function(pieces, piece, moves){
         if(this.pos != null && piece.type == 1 && piece.color == this.color){
             piece.staticAttacks.forEach(move => {
                 let temp = piece.pos.plus(inDir(move,piece.dir));
                 if(temp.equals(this.pos)){
                     moves.push(this.pos);
-                    from = piece.pos;
+                    this.from = piece.pos;
                 }
             })
         }
     },
 }
-function CASTLE(color){
+Cards.CASTLE = function(color){
     this.color = color;
     this.name = 'CASTLE';
 }
-CASTLE.prototype = {
-    ChangeMoves: function(piece, moves){
+Cards.CASTLE.prototype = {
+    ChangeMoves: function(pieces, piece, moves){
         if(piece.type == 6 && piece.moved == undefined && piece.color == this.color){
             let temp = piece.pos.clone();
             temp.x++;
@@ -94,7 +96,7 @@ CASTLE.prototype = {
             }
         }
     },
-    OnMove: function(piece, from, to, dead){
+    OnMove: function(pieces, piece, from, to, dead){
         if(piece.type == 6 && piece.color == this.color){
             piece.moved = true;
             let temp = to.minus(from);
@@ -116,12 +118,12 @@ CASTLE.prototype = {
         if(piece.type == 2 && piece.color == this.color) piece.moved = true;
     }
 }
-function REVERSEPAWN(color){
+Cards.REVERSEPAWN = function(color){
     this.color = color;
     this.name = 'REVERSEPAWN';
 }
-REVERSEPAWN.prototype = {
-    OnSpawn: function(piece){
+Cards.REVERSEPAWN.prototype = {
+    OnSpawn: function(pieces, piece){
         if(piece.type == 1 && piece.color == this.color){
             piece.overrideRules = true;
             piece.staticAttacks = [new v2d(0,1)];
@@ -138,3 +140,4 @@ REVERSEPAWN.prototype = {
         }
     }
 }
+export default Cards;

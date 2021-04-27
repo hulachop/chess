@@ -1,2 +1,2 @@
-# chess
-szachy
+# blue chess
+szachy++

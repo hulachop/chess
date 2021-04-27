@@ -1,60 +1,38 @@
 const bodyParser = require('body-parser');
-const urlencodedParser = bodyParser.urlencoded({extended:false});
 
-function init(app, firebase){
+var urlencodedParser = bodyParser.urlencoded({extended:false});
+
+function init(app, firebase, admin){
     app.get('/login', (req,res) => {
-        let user = firebase.auth().currentUser;
-        if(user != null) res.redirect('/');
-        res.render('login', {user});
+        res.render('login');
     });
     
     app.get('/register', (req, res) => {
-        let user = firebase.auth().currentUser;
-        if(user != null) firebase.auth().signOut();
-        res.render('register', {user:null});
+        res.render('register',{error:'gowno gowno'});
     });
-    
-    app.post('/login', urlencodedParser, (req, res) => {
-        firebase.auth().signInWithEmailAndPassword(req.body.email,req.body.password)
-            .then( userCredential => {
-                res.redirect('/');
-            })
-            .catch(error => {
-                console.log('ERROR!');
-                console.log(error.message);
-                res.render('login',{user:null});
+
+    app.post('/register', urlencodedParser, (req, res) => {
+        admin.auth().createUser({
+            email: req.body.email,
+            password: req.body.password,
+            displayName: req.body.username
+        }).then(user => {
+            admin.auth().updateUser(user.uid, {
+                displayName: req.body.username
             });
-    });
-    
-    app.post('/register', urlencodedParser, (req,res) => {
-        firebase.auth().createUserWithEmailAndPassword(req.body.email, req.body.password)
-            .then( userCredential => {
-                userCredential.user.updateProfile({
-                    displayName: req.body.username
-                });
-                database.ref('users/'+userCredential.user.uid).update({
-                    username: req.body.username,
-                    ranking: 1500,
-                    friends: [
-                        "pawel",
-                        "karol",
-                        "adi"
-                    ]
-                });
-                res.redirect('/');
-            })
-            .catch( error => {
-                console.log('ERROR!');
-                console.log(error.message);
-                res.render('register',{user:null});
+            admin.database().ref('users/'+user.uid).set({
+                username: req.body.username,
+                ranking: 1500,
+                friends: {
+                    dfgfsdfddfdfg:true,
+                    dsdsggdsdsdgdgs:true
+                }
             });
-    });
-    
-    app.get('/logout', (req,res) => {
-        firebase.auth().signOut().then(()=>{
-            res.redirect('/');
+            res.render('login');
         }).catch(error => {
-            res.redirect('/'); 
+            console.log('ERROR!');
+            console.log(error.message);
+            res.render('register', {error:error.message});
         });
     });
 }
