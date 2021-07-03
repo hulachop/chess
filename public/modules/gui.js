@@ -1,4 +1,4 @@
-import {Init as InitGame, HandleInput, pieces, turn, oob} from './game.js';
+import {Init as InitGame, HandleInput, pieces, turn, oob, attackMap, NextColor, state as gameState} from './game.js';
 import {v2d} from './helper.js'
 var pieceElements = document.querySelectorAll("piece");
 var markElements = document.querySelectorAll(".mark");
@@ -14,6 +14,8 @@ var listenForChanges = false;
 var flipBoard = false;
 
 var from, to, movesGUI, dragged;
+
+const colorString = ['white', 'black'];
 
 document.addEventListener("mousemove",e => {
     if(dragged != null){
@@ -65,6 +67,7 @@ if(gid != null){
             movesGUI = [];
             DrawBoard();
             DrawMarks();
+            if (gameState != null) EndGame(gameState, colorString[NextColor(myTurn)]);
         }
     });
     firebase.auth().onAuthStateChanged(user => {
@@ -82,6 +85,7 @@ if(gid != null){
             InitGame(val.BCBN);
             if(myTurn == 1) flipBoard = true;
             DrawBoard();
+            if(val.state != 'live') EndGame(val.state, colorString[val.winner]);
         });
     });
     online = true;
@@ -92,16 +96,16 @@ else{
 }
 
 function Move(){
+    let o;
     if(!online){
-        let o = HandleInput(from, to);
+        o = HandleInput(from, to);
         from = null;
         to = null;
         movesGUI = null;
-        return o;
     }
     else{
         if(from == null || to == null) return false;
-        let o = HandleInput(from, to);
+        o = HandleInput(from, to);
         if(o) firebase.auth().currentUser.getIdToken().then(token => {
             let move = {
                 x:from.x,
@@ -117,8 +121,21 @@ function Move(){
         });
         if(o) DrawBoard();
         DrawMarks();
-        return o;
     }
+    if(gameState != null){
+        EndGame(gameState, colorString[NextColor(turn)]);
+    }
+    return o;
+}
+
+function EndGame(state, winner){
+    myTurn = -1;
+    let modal = M.Modal.getInstance(document.getElementById('game-end-modal'));
+    document.getElementById('endgame-message-header').innerHTML = state;
+    let msg = document.getElementById('endgame-message');
+    if(state == 'stalemate') msg.innerHTML = 'draw';
+    if(state == 'checkmate') msg.innerHTML = winner + ' won!'
+    modal.open();
 }
 
 function DrawBoard(){
@@ -130,10 +147,10 @@ function DrawBoard(){
             var piece = document.createElement("piece");
             switch(pieces[i].color){
                 case 0:
-                    piece.classList.add("white");
+                    piece.classList.add("white-p");
                     break;
                 case 1:
-                    piece.classList.add("black");
+                    piece.classList.add("black-p");
                     break;
             }
             piece.classList.add(pieces[i].typeName);
@@ -231,8 +248,17 @@ function DrawDebug(){
                 let mark = document.createElement("div");
                 mark.classList.add("mark");
                 mark.classList.add("debug");
-                mark.style.setProperty("--game-x",p.x);
-                mark.style.setProperty("--game-y",p.y);
+                let gameX, gameY;
+                if(flipBoard){
+                    gameX = 7 - p.x;
+                    gameY = 7 - p.y;
+                }
+                else{
+                    gameX = p.x;
+                    gameY = p.y;
+                }
+                mark.style.setProperty("--game-x",gameX);
+                mark.style.setProperty("--game-y",gameY);
                 markArea.appendChild(mark);
             }
         }

@@ -33,39 +33,39 @@ piece, .mark{
 .mark.debug{
     background-color: rgba(160, 0, 0, 0.5);
 }
-.white.p {
+.white-p.p {
     background-image: url("../img/pieces/pawn-w.svg");
 }
-.white.r{
+.white-p.r{
     background-image: url("../img/pieces/rook-w.svg");
 }
-.white.n{
+.white-p.n{
     background-image: url("../img/pieces/knight-w.svg");
 }
-.white.b{
+.white-p.b{
     background-image: url("../img/pieces/bishop-w.svg");
 }
-.white.q{
+.white-p.q{
     background-image: url("../img/pieces/queen-w.svg");
 }
-.white.k{
+.white-p.k{
     background-image: url("../img/pieces/king-w.svg");
 }
-.black.p {
+.black-p.p {
     background-image: url("../img/pieces/pawn-b.svg");
 }
-.black.r{
+.black-p.r{
     background-image: url("../img/pieces/rook-b.svg");
 }
-.black.n{
+.black-p.n{
     background-image: url("../img/pieces/knight-b.svg");
 }
-.black.b{
+.black-p.b{
     background-image: url("../img/pieces/bishop-b.svg");
 }
-.black.q{
+.black-p.q{
     background-image: url("../img/pieces/queen-b.svg");
 }
-.black.k{
+.black-p.k{
     background-image: url("../img/pieces/king-b.svg");
 }

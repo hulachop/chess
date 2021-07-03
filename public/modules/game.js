@@ -5,6 +5,7 @@ var turn = 0;
 var pieces = new Array(64);
 var attackMap = [new Array(64),new Array(64)];
 var cards = new Array();
+var state = null;
 var properties = [
     {
         friendlyFire: false,
@@ -71,7 +72,9 @@ function LoadBCBN(bcbn){
     for(let i = 0; i < 2; i++) bcbn.cards[i].forEach(cardName => {cards.push(new Cards[cardName](i))});
     if(bcbn.SFEN != null) LoadFen(bcbn.SFEN);
     else LoadFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
-    if(bcbn.moves != null) for(const move of bcbn.moves) MoveRaw(new v2d(move.x,move.y), new v2d(move.x2,move.y2));
+    if(bcbn.moves != null) for(let i = 0; i < bcbn.moves.length; i+=4){
+        MoveRaw(new v2d(bcbn.moves[i]-0,bcbn.moves[i+1]-0), new v2d(bcbn.moves[i+2]-0, bcbn.moves[i+3]-0));
+    }
 }
 
 function LoadFen(fen){
@@ -100,7 +103,11 @@ function LoadFen(fen){
 }
 
 function CalcMoves(){
-    attackMap = [new Array(64),new Array(64)];
+    attackMap = [new Array(64), new Array(64)];
+    let opponent = NextColor(turn);
+    for(let i = 0; i < 64; i++) if(pieces[i] != null && pieces[i].color == opponent) {
+        pieces[i].CalcMoves(pieces);
+    }
     for(let i = 0; i < 64; i++) if(pieces[i] != null && pieces[i].color == turn) {
         pieces[i].CalcMoves(pieces);
     }
@@ -140,11 +147,28 @@ function Move(from, to){
             });
             NextTurn();
             CalcMoves();
+            state = CheckState(turn);
             o = true;
             break;
         }
     }
     return o;
+}
+
+function CheckState(color){
+    let cantMove = true;
+    let kingPos;
+    for(let i = 0; i < 64; i++) if(pieces[i]!=null && pieces[i].color == color) {
+        if(pieces[i].type == 6) kingPos = pieces[i].pos;
+        if(pieces[i].moves.length > 0){
+            cantMove = false;
+            if(kingPos != null) break;
+        }
+    }
+    let checked = attackMap[NextColor(color)][kingPos.idx()];
+    if(checked&&cantMove) return "checkmate";
+    if(!checked&&cantMove) return "stalemate";
+    return null;
 }
 
 function MoveRaw(from, to){
@@ -157,7 +181,6 @@ function MoveRaw(from, to){
         if (card.OnMove != undefined) card.OnMove(pieces, pieces[to.idx()], from, to, dead);
     });
     NextTurn();
-    CalcMoves();
     o = true;
     return o;
 }
@@ -173,4 +196,4 @@ function NextColor(color){
     return color;
 }
 
-export {Init, oob, CalcMoves, Move, NextTurn, NextColor, HandleInput, FilterMoves, pieces, cards, attackMap, turn};
+export {Init, oob, CalcMoves, Move, NextTurn, NextColor, HandleInput, FilterMoves, pieces, cards, attackMap, turn, state};

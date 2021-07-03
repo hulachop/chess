@@ -12,7 +12,7 @@ Cards.SUPERPAWN.prototype = {
         if(piece.color == this.color && piece.type == 1) piece.moved = true;
     },
     ChangeMoves: function(pieces, piece, moves){
-        let nMoves = [];
+        let nMoves = []; 
         if(piece.color == this.color && piece.type == 1 && piece.moved == undefined){
             for(let i = 0; i < moves.length; i++){
                 if(pieces[moves[i].idx()] == null){

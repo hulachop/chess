@@ -13,6 +13,9 @@ var properties = [
         allowCheck: false
     }
 ];
+
+// ================================== CARDS =====================================================
+
 const Cards = {};
 Cards.SUPERPAWN = function (color){
     this.color = color;
@@ -153,6 +156,9 @@ Cards.REVERSEPAWN.prototype = {
         }
     }
 }
+
+// ======================================= HELPER ====================================================
+
 const Pieces = {
     keys: ["none", "pawn", "rook", "knight", "bishop", "queen", "king"],
     none: 0,
@@ -328,6 +334,8 @@ function inDir(v, dir){
     return new v2d((v.x*dir.y)-(v.y*dir.x),-((v.x*dir.x)+(v.y*dir.y)));
 }
 
+// =========================================== GAME ================================================
+
 const Filters = {
     noCheck: function(pos, m){
         let output = [];
@@ -383,14 +391,17 @@ function BCBNMoves(_bcbn){
     cards = new Array();
     
     LoadBCBN(_bcbn);
-    return CalcMoves();
+    return {
+        moves: CalcMoves(),
+        state: CheckState(turn)
+    };
 }
 
 function LoadBCBN(bcbn){
     for(let i = 0; i < 2; i++) bcbn.cards[i].forEach(cardName => {cards.push(new Cards[cardName](i))});
     if(bcbn.SFEN != null) LoadFen(bcbn.SFEN);
     else LoadFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
-    if (bcbn.moves != null) for(let i = 0; i < bcbn.moves.length; i++) MoveRaw(new v2d(bcbn.moves[i].x,bcbn.moves[i].y),new v2d(bcbn.moves[i].x2,bcbn.moves[i].y2));
+    if (bcbn.moves != null) for(let i = 0; i < bcbn.moves.length; i+=4) MoveRaw(new v2d(bcbn.moves[i]-0,bcbn.moves[i+1]-0), new v2d(bcbn.moves[i+2]-0, bcbn.moves[i+3]-0));
 }
 
 function LoadFen(fen){
@@ -419,20 +430,35 @@ function LoadFen(fen){
 }
 
 function CalcMoves(){
-    attackMap = [new Array(64),new Array(64)];
-    let output = [];
+    attackMap = [new Array(64), new Array(64)];
+    let output = "";
+    let opponent = NextColor(turn);
+    for(let i = 0; i < 64; i++) if(pieces[i] != null && pieces[i].color == opponent) {
+        pieces[i].CalcMoves(pieces);
+    }
     for(let i = 0; i < 64; i++) if(pieces[i] != null && pieces[i].color == turn) {
         let temp = pieces[i].CalcMoves(pieces);
         temp.forEach(elem => {
-            output.push({
-                x: pieces[i].pos.x,
-                y: pieces[i].pos.y,
-                x2: elem.x,
-                y2: elem.y
-            });
+            output += "" + pieces[i].pos.x + pieces[i].pos.y + elem.x + elem.y;
         });
     }
     return output;
+}
+
+function CheckState(color){
+    let cantMove = true;
+    let kingPos;
+    for(let i = 0; i < 64; i++) if(pieces[i]!=null && pieces[i].color == color) {
+        if(pieces[i].type == 6) kingPos = pieces[i].pos;
+        if(pieces[i].moves.length > 0){
+            cantMove = false;
+            if(kingPos != null) break;
+        }
+    }
+    let checked = attackMap[NextColor(color)][kingPos.idx()];
+    if(checked&&cantMove) return "checkmate";
+    if(!checked&&cantMove) return "stalemate";
+    return null;
 }
 
 function FilterMoves(pos, m){

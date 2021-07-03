@@ -1,7 +1,6 @@
-*{
-    margin:0;
+html {
     font-family: sans-serif;
-}
+  }
 :root{
     --board-size: 70vh;
     --cell-size: calc(var(--board-size)*.1225);
@@ -12,15 +11,6 @@ body{
     background-color: rgb(60, 60, 255);
 }
 .header{
-    background-color: rgb(86, 86, 252);
-    height: 8vh;
-    max-width: 40vw;
-    min-width: 600px;
-    margin:auto;
-    margin-top: 1vh;
-    margin-bottom: 1vh;
-    border: rgb(0, 0, 0);
-    border-style: solid;
     text-align: center;
 }
 hr {
@@ -32,30 +22,8 @@ hr {
     height: 4vh;
     font-size:4vh;
 }
-.header hr{
-    margin: 0;
-    padding: 0;
-    margin-right: 20px;
-    margin-left: 20px;
-    height: 0vh;
-}
-.header ul{
-    padding:0;
-    padding-top: 1vh;
-    margin: 0;
-    list-style: none;
-    display: flex;
-    justify-content: space-around;
-}
-.header ul li{
-    padding: 0;
-}
-.header ul li a{
-    padding: 0;
-    margin: 0;
-    text-decoration: none;
-    color: black;
-    font-size: 2vh;
+.header-button:hover{
+    background-color: rgba(255, 255, 255, 100);
 }
 .board{
     width: var(--board-size);
@@ -65,10 +33,47 @@ hr {
     margin: auto;
 }
 img{
-    user-drag: none; 
 user-select: none;
 -moz-user-select: none;
 -webkit-user-drag: none;
 -webkit-user-select: none;
 -ms-user-select: none;
 }
+
+/* fomrs =================================== */
+
+/* label color */
+.modal-content.input-field label {
+    color: black;
+  }
+  /* label focus color */
+  .col.s12.input-field input[type]:focus + label {
+    color: black;
+  }
+  /* label underline focus color */
+  .col.s12.input-field input[type]:focus {
+    border-bottom: 1px solid #000;
+    box-shadow: 0 1px 0 0 #000;
+  }
+  .col.s12.input-field input[type] + label {
+    color: black;
+  }
+  /* label underline focus color */
+  .col.s12.input-field input[type] {
+    border-bottom: 1px solid #000;
+    box-shadow: 0 1px 0 0 #000;
+  }
+  /* valid color */
+  .col.s12.input-field input[type].valid {
+    border-bottom: 1px solid #000;
+    box-shadow: 0 1px 0 0 #000;
+  }
+  /* invalid color */
+  .col.s12.input-field input[type].invalid {
+    border-bottom: 1px solid #000;
+    box-shadow: 0 1px 0 0 #000;
+  }
+  /* icon prefix focus color */
+  .col.s12.input-field .prefix.active {
+    color: #000;
+  }

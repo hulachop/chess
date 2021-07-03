@@ -4,36 +4,116 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="stylesheet" href="styles/styles.css">
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        .button {
-            text-decoration: none;
-            color: black;
-            border: solid;
-        }
-    </style>
-    <title>Document</title>
+    <title>Blue Chess</title>
 </head>
-<body>
+<body style="background-color: rgb(60, 60, 255)">
     <%- include('partials/header.ejs'); %>
-    <form style="width:fit-content; margin: auto;" class="logged-in" action="createGame" method="post" id="createGame-form">
-        <input type="text" style="display: none;" name="token" class="token">
-        <a href="#" id="createGame-button">
-            <h1 class="button">Create game</h1>
-        </a>
-    </form>
+    <div class="container blue lighten-2 z-depth-4 logged-in">
+        <div class="row"></div>
+        <div class="row">
+            <div class="col s12 center">
+                <a data-target="create-game-modal" class="btn blue darken-1 col s12 modal-trigger" id="create-game-modal-button">Create game</a>
+            </div>
+        </div>
+        <div class="row">
+            <ul class="tabs blue lighten-2 col s12">
+                <li class="tab col s6"><a href="#public-games" class="black-text">public games</a></li>
+                <li class="tab col s6"><a href="#invites" class="black-text"><span class="new badge blue darken-1 hide" id="invites-badge">0</span>invites</a></li>
+            </ul>
+        </div>
+        <div class="row" id="public-games">
+            <table class="col s6 push-s3 centered z-depth-2">
+                <tbody id="public-games-table">
+                </tbody>
+            </table>
+        </div>
+        <div class="row" id="invites">
+            <table class="col s6 push-s3 centered z-depth-2">
+                <colgroup>
+                    <col span="1" style="width: 70%;">
+                    <col span="1" style="width: 15%;">
+                    <col span="1" style="width: 15%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="left-align">From:</th>
+                        <th colspan="2">action</th>
+                    </tr>
+                </thead>
+                <tbody id="invites-table">
+                    <tr>
+                        <td>pawelpolak</td>
+                        <td><a href="#" class="btn blue darken-1">accept</a></td>
+                        <td><a href="#" class="btn blue darken-1">decline</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="row"></div>
+    </div>
+    <div class="modal blue lighten-2" id="create-game-modal" style="max-width: 40vw; min-width: 400px">
+        <div class="modal-content row">
+            <h2 class="col s12 center">Create&nbsp;game</h2>
+            <ul class="tabs col s12 blue lighten-2">
+                <li class="tab col s6"><a href="#create-public-tab" class="active black-text">create public game</a></li>
+                <li class="tab col s6"><a href="#challenge-tab" class="black-text">challenge a friend</a></li>
+            </ul>
+            <div id="create-public-tab">
+                <form action="/createGame" method="POST" class="row center">
+                    <input type="text" name="token" class="hide token">
+                    <div class="input-field col s12">
+                        <input type="text" name="name" id="create-game-name">
+                        <label for="name" id="name-label" style="pointer-events: none;">Room name</label>
+                    </div>
+                    <button type="submit" class="btn blue darken-1" id="create-game-button">create</button>
+                </form>
+            </div>
+            <div id="challenge-tab"></div>
+        </div>
+    </div>
     <%- include('partials/firebase.ejs'); %>
     <script>
         firebase.auth().onAuthStateChanged(user => {
             if(user != null) {
-                user.getIdToken().then(token => {
-                    for(const elem of document.getElementsByClassName('token')) elem.value = token;
+                document.getElementById('create-game-name').value = user.displayName + "'s game";
+                document.getElementById('name-label').classList.add('active');
+                let publicGamesElem = document.getElementById('public-games-table');
+                database.ref('lobbies').orderByChild('public').equalTo(true).limitToFirst(10).get().then(snapshot => {
+                    let val = snapshot.val();
+                    if(val != null){
+                        let gids = Object.keys(val);
+                        gids.forEach(gid => {
+                            publicGamesElem.appendChild(createPublicGameElement(val[gid].name,gid));
+                        });
+                    }
+                    else{
+                        let bruh = document.createElement('p');
+                        bruh.innerHTML = "nobody is playin..&nbsp;sad";
+                        bruh.classList.add('center');
+                        bruh.classList.add('truncate');
+                        publicGamesElem.appendChild(bruh);
+                    }
                 });
             }
         });
-        document.getElementById('createGame-button').addEventListener('click', e => {
-            document.getElementById('createGame-form').submit();
-        })
+        document.addEventListener('DOMContentLoaded', () => {
+            let elems = document.querySelectorAll('.tabs');
+            var tabs = M.Tabs.init(elems);
+        });
+        document.getElementById('create-game-modal-button').addEventListener('click', e => {
+            console.log('gowno');
+            setTimeout(() => {
+                M.Tabs.getInstance(document.querySelectorAll('.tabs')[1]).updateTabIndicator();
+            }, 100);
+        });
+        function createPublicGameElement(name, gid){
+            let elem = document.createElement('tr');
+            elem.innerHTML = '<td>' + name + `</td>
+                        <td><a href="/game?gid=`+gid+`" class="btn blue darken-1">join</a></td>`;
+            return elem;
+        }
     </script>
 </body>
 </html>

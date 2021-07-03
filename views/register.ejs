@@ -4,63 +4,37 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>login</title>
+    <title>Register</title>
     <link rel="stylesheet" href="styles/styles.css">
-    <style>
-        h2 {
-            margin:auto;
-            margin-top: 1%;
-            margin-bottom: 1%;
-            text-align: center;
-        }
-        input {
-            margin: auto;
-            align-self: center;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        .button {
-            margin: auto;
-            margin-top: 1%;
-            margin-bottom: 1%;
-            border: solid;
-            border-radius: 20px;
-            padding-left: 10px;
-            padding-right: 10px;
-            background-color: rgb(60, 60, 255);
-        }
-        .button a {
-            text-decoration: none;
-            color: black;
-        }
-    </style>
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
 </head>
 <body>
     <%- include('partials/header.ejs'); %>
-    <div style="width: 500px; height: auto; background-color: rgb(86, 86, 252); margin:auto; border: solid;">
-        <form action="register" method="POST" id="form">
-            <h2>username</h2>
-            <input type="text" name="username">
-            <h2>email</h2>
-            <input type="email" name="email">
-            <h2>password</h2>
-            <input type="password" name="password">
-            <h2>confirm password</h2>
-            <input type="password" name="confirmPassword">
-            <div class="button" id="button"><a href="#">register</a></div>
+    <div class="container blue lighten-2 z-depth-4" style="max-width: 30vw; min-width: 400px;">
+        <div class="row">
+            <h2 class="col s12" style="text-align: center;">Register</h2>
+        </div>
+        <form action="/register" method="POST" class="row container">
+            <div class="input-field col s12">
+                <input type="text" name="username" id="username">
+                <label for="username">Username</label>
+            </div>
+            <div class="input-field col s12">
+                <input type="email" name="email" id="email">
+                <label for="email">Email</label>
+            </div>
+            <div class="input-field col s12">
+                <input type="password" name="password" id="password">
+                <label for="password">Password</label>
+            </div>
+            <div class="input-field col s12">
+                <input type="password" name="confirmPassword" id="confirmPassword">
+                <label for="confirmPassword">Confirm password</label>
+            </div>
+            <button type="submit" class="row btn col s12 blue darken-1">Register</button>
         </form>
-        <% if(error != null) { %>
-        <p style="display:block; color: red; text-align: center;"><%= error %></p>
-        <% } %>
-        <a href="/login" style="text-decoration: none; color: black;">Already have an account?</a>
+
     </div>
-    <script>
-        document.getElementById('button').addEventListener('click', e => {
-            document.getElementById('form').submit();
-        });
-    </script>
     <%- include('partials/firebase.ejs'); %>
 </body>
 </html>

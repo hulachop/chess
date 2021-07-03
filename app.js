@@ -5,6 +5,7 @@ const path = require('path');
 const game = require('./utils/game.js');
 const auth = require('./utils/auth.js');
 const bodyParser = require('body-parser');
+const validateCards = require('./utils/validate.js');
 
 var urlencodedParser = bodyParser.urlencoded({extended:false});
 
@@ -18,6 +19,7 @@ admin.initializeApp({
 });
 
 const firebase = require('firebase/app');
+const { stat } = require('fs');
 require('firebase/auth');
 require('firebase/firestore');
 require('firebase/database');
@@ -52,29 +54,19 @@ io.on('connection', socket => {
                     let db = admin.database();
                     db.ref('lobbies/'+data.gid).get().then(snapshot => {
                         let val = snapshot.val();
-                        let add = false;
-                        let addId = null;
-                        let changePlayer = false;
-                        for(let i = 0; i < val.players.length; i++){
-                            if(val.players[i] == 'any'){
-                                changePlayer = true;
-                                add = true;
-                                addId = i;
+                        let updateVal = {};
+                        updateVal[user.uid] = true;
+                        if(val.public != null){
+                            if(val.players[user.uid] != null){
+                                snapshot.ref.child('joined').update(updateVal);
                             }
-                            if(val.players[i] == user.uid){
-                                changePlayer = false;
-                                add = true;
-                                addId = i;
-                                break;
+                            else if(Object.keys(val.players).length < val.maxPlayers){
+                                snapshot.ref.child('players').update(updateVal);
+                                snapshot.ref.child('joined').update(updateVal);
                             }
                         }
-                        if(add){
-                            if(changePlayer){
-                                val.players[addId] = user.uid;
-                                snapshot.ref.child('players').set(val.players);
-                            }
-                            val.joined[addId] = true;
-                            snapshot.ref.child('joined').set(val.joined);
+                        else{
+                            if(val.players[user.uid] != null) snapshot.ref.child('joined').update(updateVal);
                         }
                     });
                 });
@@ -93,29 +85,43 @@ io.on('connection', socket => {
                 let db = admin.database();
                 db.ref('games/'+data.gid).get().then(snapshot => {
                     let val = snapshot.val();
-                    if(val.players[val.turn] == user.uid) {
-                        let ok = false;
-                        for(const m of val.moves){
-                            if(m.x == data.move.x && m.y == data.move.y && m.x2 == data.move.x2 && m.y2 == data.move.y2){
-                                ok = true;
-                                if(val.BCBN.moves == null) val.BCBN.moves = [];
-                                val.BCBN.moves.push(data.move);
-                                snapshot.ref.child('BCBN').child('moves').set(val.BCBN.moves);
-                                val.turn++;
-                                if(val.turn>1) val.turn=0;
-                                snapshot.ref.child('turn').set(val.turn);
-                                game.CalcMoves(data.gid, val.BCBN);
-                                break;
+                    if(val.state == 'live'){
+                        if(val.players[val.turn] == user.uid) {
+                            let ok = false;
+                            for(let i = 0; i < val.moves; i+=4){
+                                if(val.moves[i] == data.move.x && val.moves[i+1] == data.move.y && val.moves[i+2] == data.move.x2 && val.moves[i+3] == data.move.y2){
+                                    ok = true;
+                                    if(val.BCBN.moves == null) val.BCBN.moves = "";
+                                    val.BCBN.moves += "" + data.move.x + data.move.y + data.move.x2 + data.move.y2;
+                                    if(val.BCBN.moves == "") val.BCBN.moves = null;
+                                    snapshot.ref.child('BCBN').child('moves').set(val.BCBN.moves);
+                                    let state = game.CalcMoves(data.gid, val.BCBN);
+                                    if(state != null){
+                                        snapshot.ref.child('state').set(state);
+                                        if(state == 'checkmate') snapshot.ref.child('winner').set(val.turn);
+                                        snapshot.ref.child('turn').set(null);
+                                    }
+                                    else{
+                                        val.turn++;
+                                        if(val.turn>1) val.turn=0;
+                                        snapshot.ref.child('turn').set(val.turn);
+                                    }
+                                    break;
+                                }
                             }
+                            if(!ok) socket.emit('moveError', 'Invalid move');
                         }
-                        if(!ok) socket.emit('moveError', 'Invalid move');
+                        else socket.emit('moveError', "It's not your turn or you're not playing in this game");
                     }
-                    else socket.emit('moveError', "It's not your turn or you're not playing in this game");
+                    else{
+                        socket.emit('moveError','the game has already ended');
+                    }
                 });
             }).catch(error => {
                 console.log('error');
             })
         }).catch(error => {
+            if(error.code == 'auth/invalid-user-token')socket.emit('tokenError');
             socket.emit('moveError', error.message);
             console.log('ERROR!');
             console.log(error.message);
@@ -134,11 +140,47 @@ app.get('/about', (req, res) => {
     res.render('about');
 });
 
+app.get('/deck', (req,res) => {
+    res.render('deck');
+});
+
+app.post('/deck', urlencodedParser, (req, res) => {
+    admin.auth().verifyIdToken(req.body.token).then(decodedToken => {
+        let db = admin.database();
+        if(req.query.k == null){
+            let key = db.ref('users/'+decodedToken.uid+'/decks').push({
+                name:'new deck',
+                cards: ['CASTLE','ENPASSANT','SUPERPAWN']
+            }).key;
+            res.redirect('/deck?k='+key);
+        }
+        else{
+            let cards = validateCards(req.body.data);
+            if(cards == null){
+                res.render("deck")
+                return;
+            }
+            let newDeck = {cards};
+            if(req.body.name != null) newDeck.name = req.body.name;
+            db.ref("users/"+decodedToken.uid+"/decks/"+req.body.did).update(newDeck)
+            res.render("deck");
+        }
+    }).catch(error => {
+        console.log("ERROR!")
+        console.log(error.message)
+    })
+})
+
+app.get('/decks', (req, res) => {
+    res.render('decks');
+})
+
 app.post('/createGame', urlencodedParser, (req,res) => {
+    let private = (req.body.opponent != null);
     admin.auth().verifyIdToken(req.body.token).then(decodedToken => {
         admin.auth().getUser(decodedToken.uid).then(user => {
             let db = admin.database();
-            let key = game.createLobby(user.uid, req.query.o, db);
+            let key = game.createLobby([user.uid, req.body.opponent], req.body.name);
             res.redirect('/game?gid='+key);
         }).catch(error => {
             console.log('ERROR2!');
@@ -165,6 +207,10 @@ app.get('/game', (req,res) => {
     }
     else res.redirect('/');
 });
+
+app.get('/profile', (req,res) => {
+    res.render('profile');
+})
 
 auth(app, firebase, admin);
 

@@ -1,23 +1,56 @@
 <audio src="bruh.mp3" id="bruh-sound"></audio>
-<div class="header">
-    <style>
-        .hidden {
-            display: none;
-        }
-    </style>
-    <h1 id="headerText">Blue&nbsp;Chess</h1>
-    <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/about">About</a></li>
-        <li><a href="#" id="bruh-button" onclick="document.getElementById('bruh-sound').play();">Bruh</a></li>
-        <li class="logged-out hidden"><a href="/login">log in</a></li>
-        <li class="logged-in hidden"><a href="/profile">Profile</a></li>
-        <li class="logged-in hidden" id="logout-button"><a href="#">Log out</a></li>
-        <p class="logged-in hidden" id="hello">czesc!</p>
-    </ul>
+<div class="container header blue lighten-2 z-depth-3">
+    <div class="row">
+        <h1 class="col s12" id="header-text">Blue&nbsp;Chess</h1>
+    </div>
+    <div class="logged-out row hide">
+        <a href="/" class="btn-flat header-button col s4">Home</a>
+        <a href="/about" class="btn-flat header-button col s4">About</a>
+        <a data-target="login-modal" class="btn-flat header-button modal-trigger col s4">Log in</a>
+    </div>
+    <div class="logged-in row hide">
+        <a href="/" class="btn-flat header-button col s3">Home</a>
+        <a href="/about" class="btn-flat header-button col s3">About</a>
+        <a href="/profile" class="btn-flat header-button col s3">Profile</a>
+        <a href="#" class="btn-flat header-button col s3" id="logout-button">Log out</a>
+    </div>
+    <div id="login-modal" class="modal blue lighten-2" style="max-width: 30vw; min-width: 400px;">
+        <div class="modal-content">
+            <div class="row">
+                <h1 class="col s12">Log in</h1>
+            </div>
+            <form class="row" id="login-form">
+                <div class="input-field col s12">
+                    <input type="email" id="login-email" class="validate" name="email">
+                    <label for="email" style="pointer-events: none;">email</label>
+                </div>
+                <div class="input-field col s12">
+                    <input type="password" id="login-password" name="password">
+                    <label for="username" style="pointer-events: none;">password</label>
+                </div>
+                <div class="col s12">
+                    <a class="btn blue darken-1" id="login-button">Log in</a>
+                </div>
+            </form>
+            <div class="row">
+                <a href="/register" class="col s12 black-text">Don't have an account?</a>
+            </div>
+        </div>
+    </div>
     <script>
-        const headerText = document.getElementById('headerText');
+        const headerText = document.getElementById('header-text');
+        document.addEventListener('DOMContentLoaded', () => {
+            let elems = document.querySelectorAll('.modal');
+            var modals = M.Modal.init(elems);
+        });
+        document.getElementById('login-button').addEventListener('click', e => {
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).then(()=>{
+                let form = document.getElementById('login-form');
+                firebase.auth().signInWithEmailAndPassword(form['email'].value,form['password'].value);
+            });
+        });
     </script>
     <script src="scripts/header.js" defer></script>
+    <script defer type="text/javascript" src="js/materialize.min.js"></script>
 </div>
 <hr>

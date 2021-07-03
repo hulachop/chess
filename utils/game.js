@@ -7,40 +7,31 @@ function Init(_admin){
     let db = admin.database();
     db.ref('lobbies').on('child_changed', snapshot => {
         let val = snapshot.val();
-        let full = true;
-        for(let i = 0; i < val.joined.length; i++){
-            if(val.joined[i] == false){
-                full=false;
-                break;
-            }
-        }
-        if(full){
-            createGame(val.players[0],val.players[1],snapshot.ref.key);
+        if(val.joined != null && Object.keys(val.joined).length == val.maxPlayers){
+            createGame(val.players,snapshot.ref.key);
+            snapshot.ref.child('joined').set(null);
             snapshot.ref.set(null);
         }
     });
 }
 
-function createLobby(uid, uid2){
+function createLobby(players, name){
+    let public = null;
+    if(players[0]==null||players[1]==null) public = true;
     let db = admin.database();
-    if(uid==null)uid = 'any';
-    if(uid2 == null)uid2 = 'any';
     var lobby = {
-        players: [
-            uid,
-            uid2
-        ],
-        joined: [
-            false,
-            false
-        ]
+        public:public,
+        name: name,
+        players: {},
+        maxPlayers: 2
     }
+    for(let i = 0; i < 2; i++) if(players[i]!=null) lobby.players[players[i]] = true;
     let key = db.ref('lobbies').push(lobby).key;
     
     return key;
 }
 
-function createGame(uid, uid2, key){
+function createGame(players, key){
     let db = admin.database();
     let bcbn = {
         SFEN: null,
@@ -50,22 +41,22 @@ function createGame(uid, uid2, key){
             ['SUPERPAWN', 'ENPASSANT', 'CASTLE']
         ]
     }
-    let moves = game(bcbn);
+    let gameData = game(bcbn);
     var gameJson = {
         BCBN: bcbn,
-        players: [
-            uid,
-            uid2
-        ],
-        moves: moves,
+        players: Object.keys(players),
+        moves: gameData.moves,
+        state: 'live',
         turn: 0
     }
     db.ref('games/' + key).set(gameJson);
 }
 
 function CalcMoves(gid, bcbn){
-    let moves = game(bcbn);
-    admin.database().ref('games/'+gid+'/moves').set(moves);
+    let gameData = game(bcbn);
+    if(gameData.moves == '') gameData.moves = null;
+    admin.database().ref('games/'+gid+'/moves').set(gameData.moves);
+    return gameData.state;
 }
 
 module.exports = {Init, createLobby, CalcMoves};

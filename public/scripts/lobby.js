@@ -4,7 +4,6 @@ firebase.auth().onAuthStateChanged(user => {
     if(gid==null) window.location.href = '/';
     var lobbyRef = database.ref('lobbies/'+gid);
     lobbyRef.on('child_removed', snapshot => {
-        console.log('child removed!');
         window.location.reload();
     });
     

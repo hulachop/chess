@@ -3,6 +3,7 @@
 <head>
     <link rel="stylesheet" href="styles/styles.css">
     <link rel="stylesheet" href="styles/game.css">
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
     <link rel="icon" href="img/icon.png">
     <script type="module" src="modules/gui.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -13,9 +14,19 @@
 </head>
 <body>
     <%- include('partials/header.ejs'); %>
-    <div class="board">
-        <div class="pieces" id="piece-area"></div>
-        <div class="marks" id="mark-area">
+    <div class="container blue lighten-2 z-depth-4">
+        <div class="board">
+            <div class="pieces" id="piece-area"></div>
+            <div class="marks" id="mark-area">
+            </div>
+        </div>
+    </div>
+    <div class="modal blue lighten-2 z-depth-4" id="game-end-modal" style="max-width: 400px; min-width: 200px;">
+        <h2 id="endgame-message-header" class="center">message</h2>
+        <p class="center" id="endgame-message"></p>
+        <div class="row">
+            <a href="/" class="btn blue darken-1 col s4 push-s1">home</a>
+            <a href="#" data-target="game-end-modal" class="btn blue darken-1 col s4 push-s3 modal-trigger">analysis</a>
         </div>
     </div>
     <%- include('partials/firebase.ejs'); %>

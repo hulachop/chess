@@ -24,11 +24,11 @@ function init(app, firebase, admin){
                 username: req.body.username,
                 ranking: 1500,
                 friends: {
-                    dfgfsdfddfdfg:true,
-                    dsdsggdsdsdgdgs:true
+                    pawelpolak:true,
+                    pawelpolak2:true
                 }
             });
-            res.render('login');
+            res.render('home');
         }).catch(error => {
             console.log('ERROR!');
             console.log(error.message);
