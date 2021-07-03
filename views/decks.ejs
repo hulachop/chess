@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="scripts/decks.js" defer></script>
+    <title>Decks</title>
+</head>
+<body style="background-color: rgb(60, 60, 255)">
+    <%- include('partials/header.ejs'); %>
+    <div class="container blue lighten-2 z-depth-4">
+        <h2 class="center">Decks:</h2>
+        <div class="container">
+            <table class="centered row">
+                <colgroup>
+                    <col span="1" style="width: 40%;">
+                    <col span="1" style="width: 40%;">
+                    <col span="1" style="width: 10%;">
+                    <col span="1" style="width: 10%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>name</th>
+                        <th>cards</th>
+                        <th colspan="2">actions</th>
+                    </tr>
+                </thead>
+                <tbody id="decks-elem" class="center">
+                </tbody>
+            </table>
+            <div class="row">
+                <form class="col s12 center" style="margin: 10px;" action="/deck" method="POST">
+                    <input type="text" name="token" class="hide token">
+                    <button type="submit" class="btn blue darken-1">create new deck</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <%- include('partials/firebase.ejs'); %>
+</body>
+</html>
