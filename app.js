@@ -11,7 +11,7 @@ var urlencodedParser = bodyParser.urlencoded({extended:false});
 
 var admin = require("firebase-admin");
 
-var serviceAccount = require("C:/Users/pawel/.ssh/szachy-4cdca-firebase-adminsdk-h5neq-0e4e7add55.json");
+var serviceAccount = require(path.join(__dirname, "./szachy-4cdca-firebase-adminsdk-h5neq-daa4f103d5.json"));
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -214,4 +214,4 @@ app.get('/profile', (req,res) => {
 
 auth(app, firebase, admin);
 
-server.listen(3000);
+server.listen(8080);
